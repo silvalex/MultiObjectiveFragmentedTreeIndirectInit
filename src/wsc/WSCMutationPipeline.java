@@ -50,7 +50,7 @@ public class WSCMutationPipeline extends BreedingPipeline {
             List<String> keyList = new ArrayList<String>(tree.getPredecessorMap().keySet());
             String selectedKey = "start";
 
-            while(selectedKey.equals("start") || selectedKey.equals( "end" )) {
+            while(selectedKey.equals("start")) {
             	selectedKey = keyList.get(init.random.nextInt(keyList.size()));
             }
 
