@@ -59,7 +59,11 @@ public class WSCMutationPipeline extends BreedingPipeline {
             predecessorMap.remove(selectedKey);
 
             // Build the new fragment(s)
-            Service s = init.serviceMap.get(selectedKey);
+            Service s;
+            if (selectedKey.equals("end"))
+            	s = init.endServ;
+            else
+            	s = init.serviceMap.get(selectedKey);
             species.finishConstructingTree(s, init, tree.getPredecessorMap());
 
             tree.evaluated=false;
