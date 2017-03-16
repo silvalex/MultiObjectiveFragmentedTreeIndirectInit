@@ -82,7 +82,6 @@ DIR_OUTPUT=$DIR_GRID$2 # Name of directory containing output
 
 FILE_JOB_LIST="CURRENT_JOBS.txt"
 FILE_RESULT_PREFIX="out"
-ANALYSIS_PREFIX="eval"
 FILE_FRONT_PREFIX="front"
 
 
@@ -90,7 +89,7 @@ FILE_FRONT_PREFIX="front"
 # Copy the input files to the local directory
 #
 
-cp -r $DIR_PROGRAM"bin" .
+cp $DIR_PROGRAM"program.jar" .
 cp $DIR_PROGRAM"nsga2-wsc.params" .
 cp $ECJ_JAR .
 cp $1/* . # Copy datasets
@@ -104,20 +103,21 @@ ls -la
 
 seed=$SGE_TASK_ID
 result=$FILE_RESULT_PREFIX$seed.stat
-analysis=$ANALYSIS_PREFIX$seed.stat
 front=$FILE_FRONT_PREFIX$seed.stat
 
-java -cp ecj.23.jar:./bin:. ec.Evolve -file $3 -p seed.0=$seed -p stat.file=\$$result -p stat.evaluations=\$$analysis -p stat.front=\$$front
+java -cp ecj.23.jar:program.jar ec.Evolve -file $3 -p seed.0=$seed -p stat.file=\$$result -p stat.front=\$$front
 
-echo ==AND NOW, HAVING DONE SOMTHING USEFUL AND CREATED SOME OUTPUT==
+echo ==AND NOW, HAVING DONE SOMETHING USEFUL AND CREATED SOME OUTPUT==
 ls -la
 
 # Now we move the output to a place to pick it up from later
-cd results
 if [ ! -d $DIR_OUTPUT ]; then
   mkdir $DIR_OUTPUT
 fi
 cp *.stat $DIR_OUTPUT
+
+# Also copy over the parameter file, so we preserve the settings
+cp nsga2-wsc.params $DIR_OUTPUT
 
 echo "Ran through OK"
 
