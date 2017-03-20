@@ -45,7 +45,7 @@ public class WSCSpecies extends Species {
 	    	Service current = queue.poll();
 
 	    	if (!predecessorMap.containsKey(current.name)) {
-		    	Set<Service> predecessors = findPredecessors(init, current);
+		    	Set<Service> predecessors = findPredecessors(init, current.getInputs(), current.layer);
 		    	Set<String> predecessorNames = new HashSet<String>();
 
 		    	for (Service p : predecessors) {
@@ -58,14 +58,14 @@ public class WSCSpecies extends Species {
 	}
 
 
-	public Set<Service> findPredecessors(WSCInitializer init, Service s) {
+	public Set<Service> findPredecessors(WSCInitializer init, Set<String> inputs, int layer) {
 		Set<Service> predecessors = new HashSet<Service>();
 
 		// Get only inputs that are not subsumed by the given composition inputs
-		Set<String> inputsNotSatisfied = init.getInputsNotSubsumed(s.getInputs(), init.startServ.outputs);
+		Set<String> inputsNotSatisfied = init.getInputsNotSubsumed(inputs, init.startServ.outputs);
 		Set<String> inputsToSatisfy = new HashSet<String>(inputsNotSatisfied);
 
-		if (inputsToSatisfy.size() < s.getInputs().size())
+		if (inputsToSatisfy.size() < inputs.size())
 			predecessors.add(init.startServ);
 
 		// Find services to satisfy all inputs
@@ -77,7 +77,7 @@ public class WSCSpecies extends Species {
 				Service chosen = null;
 				candLoop:
 				for(Service cand : candidates) {
-					if (init.relevant.contains(cand) && cand.layer < s.layer) {
+					if (init.relevant.contains(cand) && cand.layer < layer) {
 						predecessors.add(cand);
 						chosen = cand;
 						break candLoop;
