@@ -67,10 +67,10 @@ multi.fitness.maximize.1     = false
 
 pop.subpop.0.species.pipe                      = ec.breed.MultiBreedingPipeline
 pop.subpop.0.species.pipe.num-sources          = 3
-pop.subpop.0.species.pipe.source.0             = wsc.WSCCrossoverPipeline
+pop.subpop.0.species.pipe.source.0             = wsc.WSCOverwritingCrossoverPipeline
 pop.subpop.0.species.pipe.source.0.prob        = 0.8
 pop.subpop.0.species.pipe.source.0.num-sources = 2
-pop.subpop.0.species.pipe.source.1             = wsc.WSCSinglePredecessorMutationPipeline
+pop.subpop.0.species.pipe.source.1             = wsc.WSCOverwritingMutationPipeline
 pop.subpop.0.species.pipe.source.1.prob        = 0.1
 pop.subpop.0.species.pipe.source.1.num-sources = 1
 pop.subpop.0.species.pipe.source.2             = ec.breed.ReproductionPipeline

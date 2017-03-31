@@ -15,7 +15,7 @@ import ec.EvolutionState;
 import ec.Individual;
 import ec.util.Parameter;
 
-public class WSCCrossoverPipeline extends BreedingPipeline {
+public class WSCOverwritingCrossoverPipeline extends BreedingPipeline {
 
 	private static final long serialVersionUID = 1L;
 	static int itsEquivalent;
@@ -92,33 +92,27 @@ public class WSCCrossoverPipeline extends BreedingPipeline {
                 }
             }
 
-            // XXX Debugging:
-//            Set<String> fragment1 = t1.getPredecessorMap().get(selected);
-//            Set<String> fragment2 = t2.getPredecessorMap().get(selected);
-//
-//            boolean equivalent = true;
-//
-//            if (fragment1.size() != fragment2.size())
-//            	equivalent = false;
-//            else {
-//            	for (String f1 : fragment1) {
-//            		if (!fragment2.contains(f1)) {
-//            			equivalent = false;
-//            			break;
-//            		}
-//            	}
-//            }
-//
-//            if (equivalent)
-//            	itsEquivalent++;
-//            else
-//            	nonEquivalent++;
-//
-//            System.out.printf("Equivalent: %d, Non-equivalent: %d\n", itsEquivalent, nonEquivalent);
-
             // Create replacement fragments
             Map<String, Set<String>> t1Replacements = findRelevantReplacements(selected, t2);
             Map<String, Set<String>> t2Replacements = findRelevantReplacements(selected, t1);
+
+            /* XXX Debugging: If all fragments already exist in the parent to be modified,
+             * this is an indicative that the structure is the same (even though some edge
+             * connections may be different).
+             */
+            boolean equivalent = false;
+
+            if(t1.getPredecessorMap().keySet().containsAll(t1Replacements.keySet()) &&
+               t2.getPredecessorMap().keySet().containsAll(t2Replacements.keySet())) {
+            	equivalent = true;
+            }
+
+            if (equivalent)
+            	itsEquivalent++;
+            else
+            	nonEquivalent++;
+
+            System.out.printf("Equivalent: %d, Non-equivalent: %d\n", itsEquivalent, nonEquivalent);
 
             // Add replacement fragments to original candidates
             addReplacementFragments(t1, t1Replacements, selected);
@@ -169,12 +163,10 @@ public class WSCCrossoverPipeline extends BreedingPipeline {
 
 	    while(!queue.isEmpty()) {
 	        String current = queue.poll();
-	        if (!originalMap.containsKey( current )) {
-                Set<String> v = new HashSet<String>(replacements.get(current));
-                originalMap.put( current, v );
-                for (String n : v) {
-                    queue.offer( n );
-                }
+            Set<String> v = new HashSet<String>(replacements.get(current));
+            originalMap.put( current, v );
+            for (String n : v) {
+                queue.offer( n );
             }
 	    }
 	}

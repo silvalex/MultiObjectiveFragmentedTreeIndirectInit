@@ -1,5 +1,6 @@
 package wsc;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -62,6 +63,7 @@ public class WSCSpecies extends Species {
 		Set<Service> predecessors = new HashSet<Service>();
 
 		// Get only inputs that are not subsumed by the given composition inputs
+
 		Set<String> inputsNotSatisfied = init.getInputsNotSubsumed(inputs, init.startServ.outputs);
 		Set<String> inputsToSatisfy = new HashSet<String>(inputsNotSatisfied);
 
