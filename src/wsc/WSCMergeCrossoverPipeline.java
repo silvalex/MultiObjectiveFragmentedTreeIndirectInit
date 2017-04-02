@@ -71,47 +71,26 @@ public class WSCMergeCrossoverPipeline extends BreedingPipeline {
     		WSCIndividual t1 = ((WSCIndividual)inds1[x]);
     		WSCIndividual t2 = ((WSCIndividual)inds2[x]);
 
-    		// Get all fragment roots from both candidates
-    		List<String> allT1Keys = new ArrayList<String>(t1.getPredecessorMap().keySet());
-            List<String> allT2Keys = new ArrayList<String>(t2.getPredecessorMap().keySet());
-
-            // Shuffle them so that the crossover is done randomly
-            Collections.shuffle( allT1Keys, init.random );
-            Collections.shuffle( allT2Keys, init.random );
-
-            // Select the fragment root for crossover
-            String selected = null;
-
-            for (String s1 : allT1Keys) {
-                if (!s1.equals("start")) {
-                    for (String s2 : allT2Keys) {
-                        if (s1.equals( s2 )) {
-                            selected = s1;
-                            break;
-                        }
-                    }
-                }
-            }
-
             // Merge fragments
             Map<String, Set<String>> mergedFragments = new HashMap<String, Set<String>>();
             for (Entry<String, Set<String>> e : t1.getPredecessorMap().entrySet()) {
+            	addToMergedMap(e.getKey(), e.getValue(), mergedFragments);
+            }
+            for (Entry<String, Set<String>> e : t2.getPredecessorMap().entrySet()) {
             	addToMergedMap(e.getKey(), e.getValue(), mergedFragments);
             }
 
             // Generate new candidate from the set of merged fragments
             Map<String, Set<String>> candidate1frags = produceFromMerged(mergedFragments, init);
             Map<String, Set<String>> candidate2frags = produceFromMerged(mergedFragments, init);
-            WSCIndividual newInd1 = new WSCIndividual();
-            newInd1.setMap(candidate1frags);
-            WSCIndividual newInd2 = new WSCIndividual();
-            newInd2.setMap(candidate2frags);
+            t1.setMap(candidate1frags);
+            t2.setMap(candidate2frags);
 
-	        inds[q] = newInd1;
+	        inds[q] = t1;
 	        inds[q].evaluated=false;
 
 	        if (q+1 < inds.length) {
-	        	inds[q+1] = newInd2;
+	        	inds[q+1] = t2;
 	        	inds[q+1].evaluated=false;
 	        }
         }
@@ -162,14 +141,14 @@ public class WSCMergeCrossoverPipeline extends BreedingPipeline {
 
 
 	public Set<Service> findPredecessors(Service current, Map<String, Set<String>> predecessorMap, Map<String, Set<String>> mergedFragments, WSCInitializer init) { // XXX
-		Set<Service> predecessors = new HashSet<Service>();
+		Set<Service> chosenPredecessors = new HashSet<Service>();
 
 		// Get only inputs that are not subsumed by the given composition inputs
 		Set<String> inputsNotSatisfied = init.getInputsNotSubsumed(current.inputs, init.startServ.outputs);
 		Set<String> inputsToSatisfy = new HashSet<String>(inputsNotSatisfied);
 
 		if (inputsToSatisfy.size() < current.inputs.size())
-			predecessors.add(init.startServ);
+			chosenPredecessors.add(init.startServ);
 
 		// Find services to satisfy all inputs from the merged map
 		List<String> candidatePredecessors = new ArrayList<String>(mergedFragments.get(current.name));
@@ -183,36 +162,13 @@ public class WSCMergeCrossoverPipeline extends BreedingPipeline {
 			Service cand = init.serviceMap.get(candName);
 
 			// Check if the candidate fulfils any pending inputs
-
-		}
-
-		for (String cand : candidatePredecessors) {
-
-		}
-
-		// Find services to satisfy all inputs
-		for (String i : inputsNotSatisfied) {
-			if (inputsToSatisfy.contains(i)) {
-				List<Service> candidates = init.taxonomyMap.get(i).servicesWithOutput;
-				Collections.shuffle(candidates, init.random);
-
-				Service chosen = null;
-				candLoop:
-				for(Service cand : candidates) {
-					if (init.relevant.contains(cand) && cand.layer < layer) {
-						predecessors.add(cand);
-						chosen = cand;
-						break candLoop;
-					}
-				}
-
-				inputsToSatisfy.remove(i);
-
-				// Check if other outputs can also be fulfilled by the chosen candidate, and remove them also
-				Set<String> subsumed = init.getInputsSubsumed(inputsToSatisfy, chosen.outputs);
-				inputsToSatisfy.removeAll(subsumed);
+			Set<String> satisfied = init.getInputsSubsumed(inputsToSatisfy, cand.outputs);
+			// If so, select it as a predecessor and remove the satisfied inputs from set to satisfy
+			if (!satisfied.isEmpty()) {
+				chosenPredecessors.add(cand);
+				inputsToSatisfy.removeAll(satisfied);
 			}
 		}
-		return predecessors;
+		return chosenPredecessors;
 	}
 }
