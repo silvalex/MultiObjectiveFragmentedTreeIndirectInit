@@ -45,7 +45,12 @@ generations                                    = 51
 
 pop.subpops		                               = 1
 pop.subpop.0.size 	                           = 500
-pop.subpop.0.duplicate-retries 	               = 0
+
+
+pop.subpop.0.duplicate-retries 	               = 100
+#base.duplicate-retries                         = 20
+
+
 pop.subpop.0.species                           = wsc.WSCSpecies
 pop.subpop.0.species.ind                       = wsc.WSCIndividual
 pop.subpop.0.species.fitness                   = ec.multiobjective.nsga2.NSGA2MultiObjectiveFitness
@@ -65,9 +70,12 @@ multi.fitness.maximize.1     = false
 #multi.fitness.maximize.2    = false
 #multi.fitness.maximize.3    = false
 
-pop.subpop.0.species.pipe                      = ec.breed.MultiBreedingPipeline
+#pop.subpop.0.species.pipe                      = ec.breed.MultiBreedingPipeline
+pop.subpop.0.species.pipe                      = ec.breed.UniquePipeline
+pop.subpop.0.species.pipe.duplicate-retries                         = 20
+
 pop.subpop.0.species.pipe.num-sources          = 3
-pop.subpop.0.species.pipe.source.0             = wsc.WSCOptimisedMergeCrossoverPipeline
+pop.subpop.0.species.pipe.source.0             = wsc.WSCCrossoverPipeline
 pop.subpop.0.species.pipe.source.0.prob        = 0.8
 pop.subpop.0.species.pipe.source.0.num-sources = 2
 pop.subpop.0.species.pipe.source.1             = wsc.WSCMutationPipeline
@@ -81,3 +89,4 @@ pop.subpop.0.species.pipe.source.0.source.1	   = ec.select.TournamentSelection
 pop.subpop.0.species.pipe.source.1.source.0	   = ec.select.TournamentSelection
 pop.subpop.0.species.pipe.source.2.source.0	   = ec.select.TournamentSelection
 select.tournament.size                         = 2
+#breed.elite.0                                  = 2
