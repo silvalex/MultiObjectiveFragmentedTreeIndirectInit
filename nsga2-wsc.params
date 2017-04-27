@@ -45,11 +45,7 @@ generations                                    = 51
 
 pop.subpops		                               = 1
 pop.subpop.0.size 	                           = 500
-
-
 pop.subpop.0.duplicate-retries 	               = 100
-#base.duplicate-retries                         = 20
-
 
 pop.subpop.0.species                           = wsc.WSCSpecies
 pop.subpop.0.species.ind                       = wsc.WSCIndividual
@@ -72,7 +68,8 @@ multi.fitness.maximize.1     = false
 
 #pop.subpop.0.species.pipe                      = ec.breed.MultiBreedingPipeline
 pop.subpop.0.species.pipe                      = ec.breed.UniquePipeline
-pop.subpop.0.species.pipe.duplicate-retries                         = 20
+pop.subpop.0.species.pipe.duplicate-retries    = 200
+pop.subpop.0.species.pipe.generate-max         = true
 
 pop.subpop.0.species.pipe.num-sources          = 3
 pop.subpop.0.species.pipe.source.0             = wsc.WSCCrossoverPipeline
