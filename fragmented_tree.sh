@@ -90,7 +90,7 @@ FILE_FRONT_PREFIX="front"
 #
 
 cp $DIR_PROGRAM"program.jar" .
-cp $DIR_PROGRAM"nsga2-wsc.params" .
+cp $DIR_PROGRAM"nsga2-wsc-unique.params" .
 cp $ECJ_JAR .
 cp $1/* . # Copy datasets
 
@@ -117,7 +117,7 @@ fi
 cp *.stat $DIR_OUTPUT
 
 # Also copy over the parameter file, so we preserve the settings
-cp nsga2-wsc.params $DIR_OUTPUT
+cp nsga2-wsc-unique.params $DIR_OUTPUT
 
 echo "Ran through OK"
 
