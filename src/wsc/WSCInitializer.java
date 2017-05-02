@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
@@ -26,6 +27,7 @@ import ec.Population;
 import ec.Subpopulation;
 import ec.simple.SimpleInitializer;
 import ec.util.Parameter;
+import wsc.WSCRandom;
 
 public class WSCInitializer extends SimpleInitializer {
 
@@ -39,16 +41,18 @@ public class WSCInitializer extends SimpleInitializer {
 	public Map<String, Service> serviceMap = new HashMap<String, Service>();
 	public Map<String, Integer> serviceToIndexMap = new HashMap<String, Integer>();
 	public Set<Service> relevant;
+	public List<Service> relevantList;
 	public Map<String, TaxonomyNode> taxonomyMap = new HashMap<String, TaxonomyNode>();
 	public Set<String> taskInput;
 	public Set<String> taskOutput;
 	public Service startServ;
 	public Service endServ;
 	public WSCRandom random;
+	public int numLayers;
 
-	public final double minAvailability = 0.0;
+	public double minAvailability = 0.0;
 	public double maxAvailability = -1.0;
-	public final double minReliability = 0.0;
+	public double minReliability = 0.0;
 	public double maxReliability = -1.0;
 	public double minTime = Double.MAX_VALUE;
 	public double maxTime = -1.0;
@@ -88,7 +92,6 @@ public class WSCInitializer extends SimpleInitializer {
 		parseWSCTaxonomyFile(state.parameters.getString(taxonomyParam, null));
 		findConceptsForInstances();
 
-
 		double[] mockQos = new double[4];
 		mockQos[TIME] = 0;
 		mockQos[COST] = 0;
@@ -101,8 +104,13 @@ public class WSCInitializer extends SimpleInitializer {
 
 		populateTaxonomyTree();
 		relevant = getRelevantServices(serviceMap, taskInput, taskOutput);
-		calculateNormalisationBounds(relevant); //XXX
-		//calculateNormalisationBounds(new HashSet<Service>(serviceMap.values()));
+		relevantList = new ArrayList<Service>(relevant);
+		calculateNormalisationBounds(relevant);
+		//calculateNormalisationBounds(new HashSet<Service>(serviceMap.values())); // XXX
+
+		// Set size of genome
+		Parameter genomeSizeParam = new Parameter("pop.subpop.0.species.genome-size");
+		state.parameters.set(genomeSizeParam, "" + relevant.size());
 		setupTime = System.currentTimeMillis() - startTime;
 	}
 
@@ -127,12 +135,12 @@ public class WSCInitializer extends SimpleInitializer {
 	}
 
 	/**
-	 * Returns the set of inputs that cannot be satisfied by the search
-	 * set.
+	 * Checks whether set of inputs can be completely satisfied by the search
+	 * set, making sure to check descendants of input concepts for the subsumption.
 	 *
 	 * @param inputs
 	 * @param searchSet
-	 * @return inputs not subsumed.
+	 * @return true if search set subsumed by input set, false otherwise.
 	 */
 	public Set<String> getInputsNotSubsumed(Set<String> inputs, Set<String> searchSet) {
 		Set<String> notSatisfied = new HashSet<String>();
@@ -144,7 +152,7 @@ public class WSCInitializer extends SimpleInitializer {
 		}
 		return notSatisfied;
 	}
-
+	
 	/**
 	 * Returns the set of inputs that can be satisfied by the search set.
 	 *
@@ -304,8 +312,9 @@ public class WSCInitializer extends SimpleInitializer {
 			sFound = discoverService(services, cSearch);
 		}
 
+		numLayers = layer;
+
 		if (isSubsumed(outputs, cSearch)) {
-		    endServ.layer = layer;
 			return sSet;
 		}
 		else {

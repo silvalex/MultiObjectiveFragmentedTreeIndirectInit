@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import ec.EvolutionState;
 import ec.Individual;
@@ -23,7 +24,7 @@ public class WSCSpecies extends Species {
 	public Parameter defaultBase() {
 		return new Parameter("wscspecies");
 	}
-
+	
 	@Override
 	public Individual newIndividual(EvolutionState state, int thread) {
 	    WSCInitializer init = (WSCInitializer) state.initializer;
@@ -37,6 +38,130 @@ public class WSCSpecies extends Species {
 
 	    return newGraph;
 	}
+	
+	/**
+	 * Creates a new random sequence of candidates for initialisation.
+	 */
+	public Service[] createRandomSequence(WSCInitializer init) {
+		List<Service> relevantList = init.relevantList;
+		Collections.shuffle(relevantList, init.random);
+
+		Service[] genome = new Service[relevantList.size()];
+		relevantList.toArray(genome);
+		return genome;
+	}
+	
+	public Graph createNewGraph(int numLayers, Service start, Service end, Service[] sequence, WSCInitializer init) {
+		Node endNode = new Node(end);
+		Node startNode = new Node(start);
+
+        Graph graph = new Graph();
+        graph.nodeMap.put(endNode.getName(), endNode);
+
+        // Populate inputs to satisfy with end node's inputs
+        List<InputNodeLayerTrio> nextInputsToSatisfy = new ArrayList<InputNodeLayerTrio>();
+
+        for (String input : end.getInputs()){
+            nextInputsToSatisfy.add( new InputNodeLayerTrio(input, end.getName(), numLayers) );
+        }
+
+        // Fulfil inputs layer by layer
+        for (int currLayer = numLayers; currLayer > 0; currLayer--) {
+
+            // Filter out the inputs from this layer that need to fulfilled
+            List<InputNodeLayerTrio> inputsToSatisfy = new ArrayList<InputNodeLayerTrio>();
+            for (InputNodeLayerTrio p : nextInputsToSatisfy) {
+               if (p.layer == currLayer)
+                   inputsToSatisfy.add( p );
+            }
+            nextInputsToSatisfy.removeAll( inputsToSatisfy );
+
+            int index = 0;
+            while (!inputsToSatisfy.isEmpty()){
+
+                if (index >= sequence.length) {
+                    nextInputsToSatisfy.addAll( inputsToSatisfy );
+                    inputsToSatisfy.clear();
+                }
+                else {
+                	Service nextNode = sequence[index++];
+                	if (nextNode.layer < currLayer) {
+	                    Node n = new Node(nextNode);
+	                    //int nLayer = nextNode.layerNum;
+
+	                    List<InputNodeLayerTrio> satisfied = getInputsSatisfiedGraphBuilding(inputsToSatisfy, n, init);
+
+	                    if (!satisfied.isEmpty()) {
+	                        if (!graph.nodeMap.containsKey( n.getName() )) {
+	                            graph.nodeMap.put(n.getName(), n);
+	                        }
+
+	                        // Add edges
+	                        createEdges(n, satisfied, graph);
+	                        inputsToSatisfy.removeAll(satisfied);
+
+
+	                        for(String input : n.getInputs()) {
+	                            nextInputsToSatisfy.add( new InputNodeLayerTrio(input, n.getName(), n.getLayer()) );
+	                        }
+	                    }
+	                }
+                }
+            }
+        }
+
+        // Connect start node
+        graph.nodeMap.put(startNode.getName(), startNode);
+        createEdges(startNode, nextInputsToSatisfy, graph);
+
+        return graph;
+    }
+	
+	public void createEdges(Node origin, List<InputNodeLayerTrio> destinations, Graph graph) {
+		// Order inputs by destination
+		Map<String, Set<String>> intersectMap = new HashMap<String, Set<String>>();
+		for(InputNodeLayerTrio t : destinations) {
+			addToIntersectMap(t.service, t.input, intersectMap);
+		}
+
+		for (Entry<String,Set<String>> entry : intersectMap.entrySet()) {
+			Edge e = new Edge(entry.getValue());
+			origin.getOutgoingEdgeList().add(e);
+			Node destination = graph.nodeMap.get(entry.getKey());
+			destination.getIncomingEdgeList().add(e);
+			e.setFromNode(origin);
+        	e.setToNode(destination);
+        	graph.edgeList.add(e);
+		}
+	}
+
+	private void addToIntersectMap(String destination, String input, Map<String, Set<String>> intersectMap) {
+		Set<String> intersect = intersectMap.get(destination);
+		if (intersect == null) {
+			intersect = new HashSet<String>();
+			intersectMap.put(destination, intersect);
+		}
+		intersect.add(input);
+	}
+	
+	public List<InputNodeLayerTrio> getInputsSatisfiedGraphBuilding(List<InputNodeLayerTrio> inputsToSatisfy, Node n, WSCInitializer init) {
+	    List<InputNodeLayerTrio> satisfied = new ArrayList<InputNodeLayerTrio>();
+	    for(InputNodeLayerTrio p : inputsToSatisfy) {
+            if (init.taxonomyMap.get(p.input).servicesWithOutput.contains( n.getService() ))
+                satisfied.add( p );
+        }
+	    return satisfied;
+	}
+	
+//===========================================================================================================
+	
+	public Map<String, Set<String>> graphToTreeTransformation(Graph g) {
+		// TODO: finish coding this
+		Map<String, Set<String>> predecessorMap = new HashMap<String, Set<String>>();
+		return null;
+	}
+	
+//===========================================================================================================
 
 	public void finishConstructingTree(Service s, WSCInitializer init, Map<String, Set<String>> predecessorMap) {
 	    Queue<Service> queue = new LinkedList<Service>();
